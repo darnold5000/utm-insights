@@ -63,7 +63,12 @@ export function LiveAppShell({ children }: { children: ReactNode }) {
               )
             })}
             <Select value={projectId} onValueChange={(value) => setProjectId(value ?? "all")} items={projectItems}>
-              <SelectTrigger className="w-[200px] border-white/20 bg-white/10 text-white" />
+              <SelectTrigger
+                className="w-[200px] border-white/20 bg-white/10 text-white [&_[data-slot=select-value]]:text-white"
+                aria-label="Project"
+              >
+                <SelectValue placeholder="All Projects" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
                 {projects.map((project) => (

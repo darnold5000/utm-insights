@@ -107,7 +107,9 @@ export function LiveLinksView() {
               onValueChange={(v) => setProjectId(v ?? "all")}
               items={Object.fromEntries(projects.map((p) => [p.id, p.name]))}
             >
-              <SelectTrigger />
+              <SelectTrigger className="w-full bg-white" aria-label="Project">
+                <SelectValue placeholder="Select project" />
+              </SelectTrigger>
               <SelectContent>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
@@ -133,7 +135,9 @@ export function LiveLinksView() {
           <div className="flex flex-col gap-2">
             <Label>Source</Label>
             <Select value={source} onValueChange={(v) => setSource(v as Source)} items={sourceItems}>
-              <SelectTrigger />
+              <SelectTrigger className="w-full bg-white" aria-label="UTM source">
+                <SelectValue placeholder="Source" />
+              </SelectTrigger>
               <SelectContent>
                 {LINK_SOURCES.map((s) => (
                   <SelectItem key={s} value={s}>
@@ -146,7 +150,9 @@ export function LiveLinksView() {
           <div className="flex flex-col gap-2">
             <Label>Medium (via link type)</Label>
             <Select value={linkType} onValueChange={(v) => setLinkType(v as LinkType)} items={typeItems}>
-              <SelectTrigger />
+              <SelectTrigger className="w-full bg-white" aria-label="Link type">
+                <SelectValue placeholder="Link type" />
+              </SelectTrigger>
               <SelectContent>
                 {LINK_TYPES.map((t) => (
                   <SelectItem key={t.id} value={t.id}>

@@ -84,7 +84,9 @@ export function LiveDashboardView() {
             onValueChange={(v) => setDays(Number(v) as 7 | 30 | 90)}
             items={RANGE_ITEMS}
           >
-            <SelectTrigger className="w-[160px]" />
+            <SelectTrigger className="w-[160px] bg-white" aria-label="Date range">
+              <SelectValue placeholder="Last 30 days" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="7">Last 7 days</SelectItem>
               <SelectItem value="30">Last 30 days</SelectItem>
@@ -96,7 +98,9 @@ export function LiveDashboardView() {
             onValueChange={(v) => setAttribution(v === "last_touch" ? "last_touch" : "first_touch")}
             items={ATTRIBUTION_ITEMS}
           >
-            <SelectTrigger className="w-[150px]" />
+            <SelectTrigger className="w-[150px] bg-white" aria-label="Attribution model">
+              <SelectValue placeholder="First touch" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="first_touch">First touch</SelectItem>
               <SelectItem value="last_touch">Last touch</SelectItem>
@@ -107,7 +111,9 @@ export function LiveDashboardView() {
             onValueChange={(v) => setConversionFilter(v ?? "all")}
             items={conversionItems}
           >
-            <SelectTrigger className="w-[220px]" />
+            <SelectTrigger className="w-[220px] bg-white" aria-label="Conversion event type">
+              <SelectValue placeholder="All conversion types" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All conversion types</SelectItem>
               {CONVERSION_EVENT_TYPES.map((type) => (
