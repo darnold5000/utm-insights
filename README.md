@@ -1,6 +1,12 @@
-# UTM Lead Tracking Demo
+# Centralized UTM analytics (utm-lead-demo)
 
-Sales walkthrough for Signal Works Digital. A simulated ad click records an anonymous visit from the landing-page URL. A contact form is optional and turns that session into a lead. Every number is fictional. There is no database, login, or live ad account.
+Signal Works campaign analytics hub for multiple products (MeetDayLive, CoachSlate, Signal Works, and future clients).
+
+**Without Supabase env vars**, the app runs as the original **localStorage sales demo** (fictional data).
+
+**With Supabase configured**, it becomes the production dashboard: auth, Postgres events, campaign link builder, and public `POST /api/v1/events` collection.
+
+See `docs/SETUP.md` and `docs/INTEGRATION.md`.
 
 ## Run
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import { DemoProvider } from "@/components/demo-provider";
+import { isAnalyticsBackendConfigured } from "@/lib/analytics/config";
 import { allowIndexing } from "@/lib/seo";
 import "./globals.css";
 
@@ -32,10 +33,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const live = isAnalyticsBackendConfigured();
   return (
     <html lang="en" className={`${dmSans.variable} ${ibmPlexMono.variable} h-full antialiased`}>
       <body className="min-h-full bg-[#f4f6f8] text-[#0c0d10]">
-        <DemoProvider>{children}</DemoProvider>
+        {live ? children : <DemoProvider>{children}</DemoProvider>}
       </body>
     </html>
   );
