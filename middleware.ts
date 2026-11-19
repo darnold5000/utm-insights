@@ -16,6 +16,16 @@ export async function middleware(request: NextRequest) {
   if (!isAnalyticsBackendConfigured()) return response
 
   const { pathname } = request.nextUrl
+  if (
+    pathname.startsWith("/leads") ||
+    pathname.startsWith("/simulator") ||
+    pathname.startsWith("/visit") ||
+    pathname.match(/^\/links\/[^/]+$/)
+  ) {
+    const dash = request.nextUrl.clone()
+    dash.pathname = "/"
+    return NextResponse.redirect(dash)
+  }
   if (isPublicPath(pathname)) return response
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!

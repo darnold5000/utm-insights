@@ -1,7 +1,7 @@
 import { normalizeLink, withContentPosts } from "@/lib/content-posts"
 import type { DemoData } from "@/lib/types"
 
-export const DEMO_STORAGE_KEY = "utm-lead-demo:v2"
+export const DEMO_STORAGE_KEY = "utm-insights:v2"
 
 export function readDemoState(): DemoData | null {
   try {

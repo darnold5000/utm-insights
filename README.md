@@ -1,4 +1,4 @@
-# Centralized UTM analytics (utm-lead-demo)
+# UTM Insights (utm-insights)
 
 Signal Works campaign analytics hub for multiple products (MeetDayLive, CoachSlate, Signal Works, and future clients).
 
