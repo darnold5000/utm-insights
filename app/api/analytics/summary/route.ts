@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
     events,
     mode as AttributionMode,
     conversionFilter === "all" ? null : conversionFilter,
+    days,
   )
   return NextResponse.json({ summary, eventCount: events.length })
 }

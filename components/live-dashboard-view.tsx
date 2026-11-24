@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { CONVERSION_EVENT_TYPES } from "@/lib/analytics/config"
-import { formatNumber, formatPercent } from "@/lib/format"
+import { formatDay, formatNumber, formatPercent, formatTimestamp } from "@/lib/format"
 
 const RANGE_ITEMS: Record<string, string> = {
   "7": "Last 7 days",
@@ -65,9 +65,16 @@ export function LiveDashboardView() {
     convertedVisitors: 0,
     conversionRate: null,
     topCampaign: null,
+    rangeStart: "",
+    rangeEnd: "",
     campaignRows: [],
     trafficSources: [],
+    activity: [],
   }
+  const windowLabel =
+    s.rangeStart && s.rangeEnd
+      ? `${formatDay(s.rangeStart.slice(0, 10))} – ${formatDay(s.rangeEnd.slice(0, 10))}`
+      : null
 
   return (
     <div className="flex flex-col gap-6">
@@ -75,7 +82,8 @@ export function LiveDashboardView() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Campaign dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            {projectName}. Live data from the centralized tracking API.
+            {projectName}
+            {windowLabel ? ` · ${windowLabel}` : ""}. Live data from the centralized tracking API.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -153,14 +161,17 @@ export function LiveDashboardView() {
                 <TableHead>Medium</TableHead>
                 <TableHead>Content</TableHead>
                 <TableHead className="text-right">Visitors</TableHead>
+                <TableHead className="text-right">Views</TableHead>
                 <TableHead className="text-right">Conversions</TableHead>
                 <TableHead className="text-right">Rate</TableHead>
+                <TableHead>First seen</TableHead>
+                <TableHead>Last seen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {s.campaignRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-muted-foreground">
+                  <TableCell colSpan={9} className="text-muted-foreground">
                     No campaign data in this range yet.
                   </TableCell>
                 </TableRow>
@@ -172,10 +183,58 @@ export function LiveDashboardView() {
                     <TableCell>{row.medium ?? "—"}</TableCell>
                     <TableCell>{row.content ?? "—"}</TableCell>
                     <TableCell className="text-right">{formatNumber(row.visitors)}</TableCell>
+                    <TableCell className="text-right">{formatNumber(row.views)}</TableCell>
                     <TableCell className="text-right">{formatNumber(row.conversions)}</TableCell>
                     <TableCell className="text-right">
                       {row.rate == null ? "—" : formatPercent(row.rate)}
                     </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                      {row.firstSeen ? formatTimestamp(row.firstSeen) : "—"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                      {row.lastSeen ? formatTimestamp(row.lastSeen) : "—"}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent activity</CardTitle>
+          <CardDescription>Newest events in this range, with the page and referrer.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>When</TableHead>
+                <TableHead>Event</TableHead>
+                <TableHead>Page</TableHead>
+                <TableHead>Referrer</TableHead>
+                <TableHead>Campaign</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {s.activity.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-muted-foreground">
+                    No events in this range yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                s.activity.map((row, index) => (
+                  <TableRow key={`${row.occurredAt}-${row.eventType}-${index}`}>
+                    <TableCell className="whitespace-nowrap">{formatTimestamp(row.occurredAt)}</TableCell>
+                    <TableCell>{row.eventType.replace(/_/g, " ")}</TableCell>
+                    <TableCell className="max-w-[280px] truncate" title={row.page}>
+                      {row.page}
+                    </TableCell>
+                    <TableCell>{row.referrer ?? "—"}</TableCell>
+                    <TableCell>{row.campaign ?? "—"}</TableCell>
                   </TableRow>
                 ))
               )}

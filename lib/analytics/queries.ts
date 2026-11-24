@@ -142,8 +142,20 @@ export type CampaignRow = {
   medium: string | null
   content: string | null
   visitors: number
+  views: number
   conversions: number
   rate: number | null
+  firstSeen: string | null
+  lastSeen: string | null
+}
+
+export type ActivityRow = {
+  occurredAt: string
+  eventType: string
+  page: string
+  referrer: string | null
+  campaign: string | null
+  source: string | null
 }
 
 export type AnalyticsSummary = {
@@ -154,14 +166,60 @@ export type AnalyticsSummary = {
   convertedVisitors: number
   conversionRate: number | null
   topCampaign: string | null
+  rangeStart: string
+  rangeEnd: string
   campaignRows: CampaignRow[]
   trafficSources: { label: string; visitors: number }[]
+  activity: ActivityRow[]
+}
+
+type CampaignAcc = CampaignRow & { visitorIds: Set<string> }
+
+function blankCampaign(attr: { campaign: string | null; source: string | null; medium: string | null; content: string | null }): CampaignAcc {
+  return {
+    campaign: attr.campaign ?? "(none)",
+    source: attr.source,
+    medium: attr.medium,
+    content: attr.content,
+    visitors: 0,
+    views: 0,
+    conversions: 0,
+    rate: null,
+    firstSeen: null,
+    lastSeen: null,
+    visitorIds: new Set(),
+  }
+}
+
+function touchSeen(row: CampaignAcc, at: string) {
+  if (!row.firstSeen || at < row.firstSeen) row.firstSeen = at
+  if (!row.lastSeen || at > row.lastSeen) row.lastSeen = at
+}
+
+function pageLabel(value: string | null): string {
+  if (!value) return "—"
+  try {
+    const url = new URL(value)
+    return `${url.host}${url.pathname}${url.search}`
+  } catch {
+    return value
+  }
+}
+
+function referrerLabel(value: string | null): string | null {
+  if (!value) return null
+  try {
+    return new URL(value).host
+  } catch {
+    return value
+  }
 }
 
 export function summarizeEvents(
   events: DbTrackingEvent[],
   mode: AttributionMode,
   conversionEventType?: string | null,
+  days: AnalyticsRangeDays = 30,
 ): AnalyticsSummary {
   const pageViews = events.filter((e) => e.event_type === "page_view")
   const uniqueVisitors = new Set(pageViews.map((e) => e.visitor_id)).size
@@ -178,49 +236,51 @@ export function summarizeEvents(
   const convertedVisitors = new Set(conversionEvents.map((e) => e.visitor_id)).size
   const conversionRate = uniqueVisitors > 0 ? convertedVisitors / uniqueVisitors : null
 
-  const campaignMap = new Map<string, CampaignRow>()
+  const campaignMap = new Map<string, CampaignAcc>()
+  const campaignKey = (attr: { campaign: string | null; source: string | null; medium: string | null; content: string | null }) =>
+    [attr.campaign ?? "(none)", attr.source ?? "", attr.medium ?? "", attr.content ?? ""].join("|")
+
   for (const event of pageViews) {
     const attr = pickAttribution(event, mode)
-    const key = [attr.campaign ?? "(none)", attr.source ?? "", attr.medium ?? "", attr.content ?? ""].join("|")
-    const row =
-      campaignMap.get(key) ??
-      ({
-        campaign: attr.campaign ?? "(none)",
-        source: attr.source,
-        medium: attr.medium,
-        content: attr.content,
-        visitors: 0,
-        conversions: 0,
-        rate: null,
-      } satisfies CampaignRow)
-    row.visitors += 1
+    const key = campaignKey(attr)
+    const row = campaignMap.get(key) ?? blankCampaign(attr)
+    row.views += 1
+    row.visitorIds.add(event.visitor_id)
+    touchSeen(row, event.occurred_at)
     campaignMap.set(key, row)
   }
 
   for (const event of conversionEvents) {
     const attr = pickAttribution(event, mode)
-    const key = [attr.campaign ?? "(none)", attr.source ?? "", attr.medium ?? "", attr.content ?? ""].join("|")
-    const row = campaignMap.get(key)
-    if (row) row.conversions += 1
-    else {
-      campaignMap.set(key, {
-        campaign: attr.campaign ?? "(none)",
-        source: attr.source,
-        medium: attr.medium,
-        content: attr.content,
-        visitors: 0,
-        conversions: 1,
-        rate: null,
-      })
-    }
+    const key = campaignKey(attr)
+    const row = campaignMap.get(key) ?? blankCampaign(attr)
+    row.conversions += 1
+    touchSeen(row, event.occurred_at)
+    campaignMap.set(key, row)
   }
 
   const campaignRows = [...campaignMap.values()]
-    .map((row) => ({
+    .map(({ visitorIds, ...row }) => ({
       ...row,
-      rate: row.visitors > 0 ? row.conversions / row.visitors : null,
+      visitors: visitorIds.size,
+      rate: visitorIds.size > 0 ? row.conversions / visitorIds.size : null,
     }))
-    .sort((a, b) => b.visitors - a.visitors || b.conversions - a.conversions)
+    .sort((a, b) => b.visitors - a.visitors || b.views - a.views || b.conversions - a.conversions)
+
+  const activity = [...events]
+    .sort((a, b) => (a.occurred_at < b.occurred_at ? 1 : -1))
+    .slice(0, 20)
+    .map((event) => {
+      const attr = pickAttribution(event, mode)
+      return {
+        occurredAt: event.occurred_at,
+        eventType: event.event_type,
+        page: pageLabel(event.page_path),
+        referrer: referrerLabel(event.referrer),
+        campaign: attr.campaign,
+        source: attr.source,
+      }
+    })
 
   const topCampaign = campaignRows.find((r) => r.campaign !== "(none)")?.campaign ?? null
 
@@ -247,7 +307,10 @@ export function summarizeEvents(
     convertedVisitors,
     conversionRate,
     topCampaign,
+    rangeStart: rangeStart(days),
+    rangeEnd: new Date().toISOString(),
     campaignRows,
     trafficSources,
+    activity,
   }
 }
